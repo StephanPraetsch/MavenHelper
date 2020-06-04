@@ -4,18 +4,22 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.PopupHandler;
-import krasa.mavenhelper.analyzer.MyTreeUserObject;
-import org.jetbrains.idea.maven.model.MavenArtifactNode;
-import org.jetbrains.idea.maven.project.MavenProject;
 
+import java.awt.*;
+import java.util.ArrayList;
+import java.util.Enumeration;
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.MutableTreeNode;
 import javax.swing.tree.TreeNode;
-import java.awt.*;
-import java.util.ArrayList;
-import java.util.Enumeration;
+
+import org.jetbrains.idea.maven.model.MavenArtifactNode;
+import org.jetbrains.idea.maven.project.MavenProject;
+
+import krasa.mavenhelper.analyzer.MyTreeUserObject;
+import krasa.mavenhelper.utils.CommandProcessorRunner;
+import krasa.mavenhelper.utils.DomManagerSupplier;
 
 /**
  * @author Vojtech Krasa
@@ -24,12 +28,16 @@ public class RightTreePopupHandler extends PopupHandler {
 	private final Project project;
 	private final MavenProject mavenProject;
 	protected final JTree tree;
-	private JPopupMenu popup;
+    private JPopupMenu popup;
+    private final CommandProcessorRunner commandProcessorRunner;
+    private final DomManagerSupplier domManagerSupplier;
 
 	public RightTreePopupHandler(Project project, MavenProject mavenProject, JTree tree) {
 		this.project = project;
 		this.mavenProject = mavenProject;
 		this.tree = tree;
+		this.commandProcessorRunner = new CommandProcessorRunner(project);
+		this.domManagerSupplier = DomManagerSupplier.DEFAULT;
 	}
 
 	private DefaultMutableTreeNode getRoot() {
@@ -51,9 +59,9 @@ public class RightTreePopupHandler extends PopupHandler {
 		DefaultActionGroup actionGroup = new DefaultActionGroup();
 
 		if (myTreeUserObject.getMavenArtifactNode().getParent() == null) {
-			actionGroup.add(new JumpToSourceAction(project, mavenProject, mavenArtifactNode));
+			actionGroup.add(new JumpToSourceAction(project, mavenProject, mavenArtifactNode, domManagerSupplier));
 		} else {
-			actionGroup.add(new JumpToSourceAction(project, mavenProject, mavenArtifactNode));
+			actionGroup.add(new JumpToSourceAction(project, mavenProject, mavenArtifactNode, domManagerSupplier));
 			actionGroup.add(getExcludeAction(selectedNode, mavenArtifactNode));
 		}
 
@@ -70,7 +78,7 @@ public class RightTreePopupHandler extends PopupHandler {
 
 	private ExcludeDependencyAction getExcludeAction(final DefaultMutableTreeNode selectedNode,
 													 MavenArtifactNode mavenArtifactNode) {
-		return new ExcludeDependencyAction(project, mavenProject, mavenArtifactNode) {
+		return new ExcludeDependencyAction(project, mavenProject, mavenArtifactNode, commandProcessorRunner, domManagerSupplier) {
 			@Override
 			public void dependencyExcluded() {
 				removeTreeNodes();

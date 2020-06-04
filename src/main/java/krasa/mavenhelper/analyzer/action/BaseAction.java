@@ -1,8 +1,6 @@
 package krasa.mavenhelper.analyzer.action;
 
-import com.intellij.diagram.DiagramColors;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
@@ -17,27 +15,19 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.ui.JBColor;
-import com.intellij.util.PlatformIcons;
 import com.intellij.util.xml.DomFileElement;
-import com.intellij.util.xml.DomManager;
 import com.intellij.util.xml.GenericDomValue;
-import icons.MavenIcons;
-import org.jetbrains.annotations.Nullable;
+
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.dom.model.MavenDomShortArtifactCoordinates;
-import org.jetbrains.idea.maven.ext.uml.MavenElement;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenArtifactNode;
-import org.jetbrains.idea.maven.model.MavenArtifactState;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.navigator.MavenNavigationUtil;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.utils.MavenArtifactScope;
 
-import javax.swing.*;
-import java.awt.*;
+import krasa.mavenhelper.utils.DomManagerSupplier;
 
 /**
  * @author Vojtech Krasa
@@ -50,12 +40,15 @@ public abstract class BaseAction extends DumbAwareAction {
 	protected final Project myProject;
 	protected final MavenProject myMavenProject;
 	protected final MavenArtifactNode myArtifact;
+    private final DomManagerSupplier domManagerSupplier;
 
-	public BaseAction(Project myProject, MavenProject myMavenProject, MavenArtifactNode myTreeNode, final String text) {
+    public BaseAction(Project myProject, MavenProject myMavenProject, MavenArtifactNode myTreeNode, final String text,
+                      DomManagerSupplier domManagerSupplier) {
 		super(text);
 		this.myProject = myProject;
 		this.myMavenProject = myMavenProject;
-		myArtifact = myTreeNode;
+		this.myArtifact = myTreeNode;
+		this.domManagerSupplier = domManagerSupplier;
 	}
 
 	protected MavenArtifactNode getOldestParentMavenArtifact() {
@@ -77,7 +70,7 @@ public abstract class BaseAction extends DumbAwareAction {
 //			showError(mavenArtifactNode);
 			return null;
 		}
-		DomFileElement<MavenDomProjectModel> fileElement = DomManager.getDomManager(myProject).getFileElement(xmlFile, MavenDomProjectModel.class);
+		DomFileElement<MavenDomProjectModel> fileElement = domManagerSupplier.get(myProject).getFileElement(xmlFile, MavenDomProjectModel.class);
 
 		if (fileElement == null) {
 			showError(xmlFile);
