@@ -1,6 +1,5 @@
 package krasa.mavenhelper.analyzer.action;
 
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
@@ -8,7 +7,9 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.util.xml.DomManager;
 import com.intellij.util.xml.impl.DomManagerImpl;
 
 import org.jetbrains.idea.maven.model.MavenArtifactNode;
@@ -37,7 +38,13 @@ public class ExcludeDependencyActionTest {
     private AnActionEvent actionEvent;
 
     @Mock
-    private VirtualFile mavenProjectFile;
+    private VirtualFile virtualFile;
+
+    @Mock
+    private DomManagerSupplier domManagerSupplier;
+
+    @Mock
+    private DomManager domManager;
 
     @Mock
     private PsiManager psiManager;
@@ -45,28 +52,35 @@ public class ExcludeDependencyActionTest {
     @Mock
     private XmlFile xmlFile;
 
-    @Mock
-    private DomManagerSupplier domManagerSupplier;
-
     @Before
-    public void setUp() {
+    public void setUp() throws Exception {
         initMocks(this);
+        psiManager = new PsiManagerImpl(project);
+        when(project.getService(PsiManager.class)).thenReturn(psiManager);
+        when(mavenProject.getFile()).thenReturn(virtualFile);
+        when(psiManager.findFile(virtualFile)).thenReturn(xmlFile);
+        domManager = new DomManagerImpl(project);
+        when(domManagerSupplier.get(project)).thenReturn(domManager);
+    }
+
+    @Test
+    public void testExclusion() {
+
+        // given
+//        DomFileElement<MavenDomProjectModel> fileElement = new DomFileElementImpl(
+//                xmlFile,
+//                EvaluatedXmlNameImpl.createEvaluatedXmlName(new XmlName("localName"), "namespaceKey", false),
+//                new DomFileDescription(),
+//                new FileStub());
+//        when(domManager.getFileElement(xmlFile, MavenDomProjectModel.class)).thenReturn(fileElement);
+
         uut = new ExcludeDependencyAction(project, mavenProject, mavenArtifactNode,
                 CommandProcessorRunnerForTests.INSTANCE, domManagerSupplier) {
             @Override
             public void dependencyExcluded() {
             }
         };
-        when(project.getService(PsiManager.class)).thenReturn(psiManager);
-    }
 
-    @Test
-    public void name() {
-
-        // given
-        when(mavenProject.getFile()).thenReturn(mavenProjectFile);
-        when(psiManager.findFile(mavenProjectFile)).thenReturn(xmlFile);
-        when(domManagerSupplier.get(any())).thenReturn(new DomManagerImpl(project));
 
         // when
         uut.actionPerformed(actionEvent);
