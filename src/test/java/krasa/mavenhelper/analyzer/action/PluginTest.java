@@ -32,17 +32,6 @@ public class PluginTest extends LightJavaCodeInsightFixtureTestCase {
         this.project = getProject();
     }
 
-    protected void waitForReadingCompletion(MavenProjectsManager mavenProjectsManager) {
-        ApplicationManager.getApplication().invokeAndWait(() -> {
-            try {
-                mavenProjectsManager.waitForReadingCompletion();
-            }
-            catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-        });
-    }
-
     public void testSomething() throws Exception {
 
         myFixture.configureByFiles("pom.xml");
@@ -52,7 +41,14 @@ public class PluginTest extends LightJavaCodeInsightFixtureTestCase {
         mavenProjectsManager.initForTests();
 
         mavenProjectsManager.resetManagedFilesAndProfilesInTests(Collections.singletonList(virtualFile), new MavenExplicitProfiles(Collections.emptyList()));
-        waitForReadingCompletion(mavenProjectsManager);
+        ApplicationManager.getApplication().invokeAndWait(() -> {
+            try {
+                mavenProjectsManager.waitForReadingCompletion();
+            }
+            catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        });
 
         ApplicationManager.getApplication().invokeAndWait(() -> {
             mavenProjectsManager.waitForResolvingCompletion();
